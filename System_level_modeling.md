@@ -263,3 +263,13 @@ Still waiting for the image generation to complete....
 
 Image generation has completed, the test on these images showed that the encoder will struggle with images where arm separation is 0.2. will plot out the image and compare to see if the image is too dense in the normal context.
 
+## 28 July
+
+Just wrote up the arbiter class and encapsulated the whole 5 channels and arbiter into one data line class.
+
+So far, the arbiter will only pop data of each FIFO by order. If the FIFO is empty, it will skip this FIFO and do nothing.
+
+Therefore, the arbiter will work in the same clock cycle as each diode producer, i.e. 20 MHz.
+
+So far, the images under the construction of 5 channels per arbiter round robin has been working alright with image 006 and the max space used across the data line is 80 words.
+
