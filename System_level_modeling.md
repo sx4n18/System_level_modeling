@@ -184,3 +184,82 @@ Conclusion:
 
 To prevent overflow, we might need the reading speed at around 5MHz for each channel.
 
+
+## 22 July
+
+After the experiment from yesterday, we can see that for an image with only 1000 lines, the buffer size of 256 is still enough.
+
+But for a foreseeable future, it will run out very quickly.
+
+I will generate a much longer image to test it out.
+
+But also, what if we introduce the 1-bit encoding to the process?
+
+I will first update the channel class to get the filter added.
+
+The simple one-bit mode has been added to the channel class
+
+## 23 July
+
+I have just generated a longer image with 100 pixels and 20,000 rows.
+
+Will quantise it and then feed it into the channel class to see how it will react.
+
+Also just realised the runs I made yesterday has the configuration of **500 per cc** and mean size of **20 um**
+
+With the testing of the following configuration:
+
++ writing speed at 20MHz, sometimes 1 word, sometimes 2 words
++ FIFO depth 256
++ FIFO width 16
++ reading speed at 5MHz always 1 word at a time
++ arm separation 0.2
+
+256 words are enough for this case, max word use is 78.
+
+
+When reading speed is 4 MHz, 256 FIFO depth is still enough and max word use is 135
+
+When reading speed is 3.33333 MHz, 256 FIFO depth is **NOT** enough, but 512 would suffice. The max word use is 415.
+
+However, this does not look safe:
+
+![Maximum used up space across all channels: 415](./img/Channel_10_with_an_ever_increasing_word_use_of_FIFO_max_at_415.png)
+
+I think this agrees with the conclusion made from yesterday where the safe reading speed should be no less than 4 MHz.
+
+But for a less dense case like when arm separation is 0.06, even 128 would be sufficient for reading speed at: 3.33 MHz, 2.86 MHz and 2.5 MHz.
+
+I will test out the case when FIFO is full, if the 1-bit mode will help.
+
+## 24 July
+
+Since we have had the test where 256-word deep FIFO is not enough for the reading speed of 3.3333 MHz.
+
+I will try to turn the one bit mode on and see if that will help.
+
+I have recreated the case for reading speed of 3.33 MHz with one-bit-mode turned on. 
+
+It seems this cannot change the fact that it will be full eventually.
+
+![Turned one bit mode on and it seems this does not substantially change the situation but only postponed the inevitable](./img/one_bit_mode_turned_on_with_reading_at_3_33MHz_and_postponed_the_filling_of_FIFO.png)
+
+With one-bit mode turned on, it only extended the filling of the FIFO by few time steps.
+
+10281 - 10268 = 13
+
+only 13 steps were saved, this is not helpful in this case.
+
+We should either rethink about this one-bit mode or just not do it at all in this case.
+
+In the meantime, I will generate a new batch of data with the configuration of **500 per cc** and mean size of **30 um**
+
+
+## 25 July
+
+To clarify, when I say "rethink about one-bit mode", I mean thinking of something that would actually help save space.
+
+Still waiting for the image generation to complete....
+
+Image generation has completed, the test on these images showed that the encoder will struggle with images where arm separation is 0.2. will plot out the image and compare to see if the image is too dense in the normal context.
+
