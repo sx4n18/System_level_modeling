@@ -220,6 +220,8 @@ With the testing of the following configuration:
 
 When reading speed is 4 MHz, 256 FIFO depth is still enough and max word use is 135
 
+![The 4MHz reading speed can work under the stress of 20k rows of image max space taken is 135](./img/Reading_at_4Mz_the_max_word_used_is_135_at_test_of_20k_rows_test.png)
+
 When reading speed is 3.33333 MHz, 256 FIFO depth is **NOT** enough, but 512 would suffice. The max word use is 415.
 
 However, this does not look safe:
@@ -271,5 +273,129 @@ So far, the arbiter will only pop data of each FIFO by order. If the FIFO is emp
 
 Therefore, the arbiter will work in the same clock cycle as each diode producer, i.e. 20 MHz.
 
+Test on 20k row image with the particle density of **500 per cc** and mean size of **30 um**
+
+The test is based off the following configuration:
+
++ writing speed at 20MHz, sometimes 1 word, sometimes 2 words
++ FIFO depth 256
++ reading speed at 20MHz round robin among 5 channels
++ arm separation 0.06
+
 So far, the images under the construction of 5 channels per arbiter round robin has been working alright with image 006 and the max space used across the data line is 80 words.
+
+![The data line class shows that the round robin has been okay for image 006 with longer 20k row images](./img/Image_006_simulation_for_the_DataLine_where_sinmple_round_robin_dataloop_has_been_included.png)
+
+
+But if I set up the Data line to run arm separation of 0.2, it will fail pretty quickly with all the FIFOs filled up.
+
+
+![Arm Separation of 0.2 proves to be very difficult and the solution of compression and round robin data pop is difficult to clear out the data](./img/image02_proves_to_be_more_challenging_for_this_architecture_where_round_robin_is_not_gonna_help.png)
+
+
+## 29 July
+
+Following the meeting today, I will list up all the possible arbiter mechanism I can think of right now:
+
+#### Weighted Round Robin
+
+Assign weights based on FIFO fullness, more full FIFOs get more priority
+
+Problem here: You need to track FIFO fullness...
+
+
+#### Urgency-Based Arbitration
+
+Prioritise FIFOs that are close to full
+
+Compare FIFO fill levels each cycle and assign priority to the FIFO with the highest occupancy.
+
+Some kinda of FIFO usage level may be needed, or "almost_full" flag, and how much should one session read at a time?
+
+
+#### Priority + Ageing
+
+Assign static priorities but gradually increase "urgency" for low-priority FIFOs that haven't been served in a while.
+
+
+#### Token Bucket
+
+Give each FIFO a token bucket, a FIFO can transmit only if it has tokens.
+
+
+
+## 30 July
+
+So I checked quickly, it is possible to have a quick conversion from Gray code back to Binary. 
+
+Conversion should look like:
+
+```text
+B[n-1] = G[n-1]                   // MSB is the same
+B[i]   = B[i+1] XOR G[i]          // for i = n-2 down to 0
+```
+
+This translates to the following verilog, if there are fixed 4 bits of gray code:
+
+```verilog
+B[3] = G[3];
+B[2] = G[3] ^ G[2];
+B[1] = G[3] ^ G[2] ^ G[1];
+B[0] = G[3] ^ G[2] ^ G[1] ^ G[0];
+```
+
+
+## 12 Aug
+
+I have the Urgency based algorithm written in verilog, the overall algorithm is defined as follow:
+
+
+Input:
+
+Space used across 5 different channels --> data_used [4:0]
+
+FIFO empty flags --> fifo_empty [4:0]
+
+Output:
+
+Grant_one_hot --> grant_one_hot [4:0]
+
+
+Internal register:
+
+urgency [4:0]
+age [4:0]
+grant [2:0]
+
+
+```text
+
+for id in range(5):
+  if(fifo_empty[id])
+    age[id] = 0
+    urgency[id] = 0
+  else if(grant == id)
+    age[id] = 0
+  else if(age[id] < 255)
+    age[id] += 1
+
+  urgency[id] = (data_used[id] << 2) + age [id]
+
+grant = maxid(urgency)
+grant_one_hot = OneHot(grant) 
+```
+
+## 14 Aug
+
+I will write up a new arbiter class based on the old round robin arbiter class.
+
+It will be called ArbiterUrgency and it should have the same methods as the base class **arbiter**.
+
+I finished drafting for the class ArbiterUrgency, will now plug it in to test the stressful cases.
+
+And it appears that this arbiter does a better job at keeping all the channels fair and tried to pop the data whenever it could.
+
+But due to the high throughput of the channel, it simply cannot cope the demand.
+
+![The urgency based arbiter is treating each channel fair and square, but cannot cope the large data throughput](./img/urgency_based_arbiter_does_a_better_job_at_keeping_each_channel_fair.png)
 
