@@ -399,3 +399,78 @@ But due to the high throughput of the channel, it simply cannot cope the demand.
 
 ![The urgency based arbiter is treating each channel fair and square, but cannot cope the large data throughput](./img/urgency_based_arbiter_does_a_better_job_at_keeping_each_channel_fair.png)
 
+
+# System level modeling Continued
+
+This project mainly carries previous test and research work with continued sight and view point.
+
+But still, this will be mainly focused on the compression algorithms implementation, either on purely software or hardware implementation.
+
+## 05 Dec 2025
+
+Following the meeting on 04 Dec, it has been pointed out that we should have a more thorough simulation on the data flow for the pixel and compressor.
+
+Another thing we talked about is the 3-bit 1-bit mode, which should be implemented in the class to verify the effectiveness for it. Cus my old 1-bit mode simply just squeezes the 3 rows' pixel values into the 16-bit data without any optimisation. This might change if it is actually needuseful to have the 1-bit mode integrated into the compressor.
+
+**1-bit mode? What is the direction?**
+
+What was mentioned about the 1-bit mode is that we shall keep the compression algorithm we have. Instead, we squeeze 3 rows of pixels into 1 word instead of each row for 1 word.
+
+But how do we categorise 7 values into 2?
+
+What Piotr talked about is: simply take the MSB as the 1-bit input. For example, *1*00 --> *1*, *1*01 --> *1*, *0*11 --> *0*, *0*10 --> *0*.
+
+So that the binary code kept the range half half. i.e. 0-3 --> 0; 4-7 --> 1;, which is what we want.
+
+*But will this work for Gray code?*
+
+TL;DR. Yes, technically it will work. But this depends on our threshold definition.
+
+There are 2 aspects to consider:
+
+1. Will Gray code representations of number 0-3 and 4-7 be correctly identified into 0 and 1?
+2. Will the final binary form truly represent the light intensity at either < 0.5 and >= 0.5?
+
+
+Question 1: Yes it will.
+
+|      |      |      |      |      |      |      |      |      |
+|------|------|------|------|------|------|------|------|------|
+|  Bin |  000 | 001  |  010 | 011  | 100  | 101  | 110  | 111  |   
+| Gray |  000 | 001  |  011 | 010  | 110  | 111  | 101  | 100  | 
+|  Binarised value    |  0 | 0  | 0  | 0  |  1  | 1 |  1 | 1| 
+
+This is because Gray code calculation is: A ^ (A >> 1)
+
+So Gray code for 0xx: 0xx ^ 00x --> 0xx
+
+And Gray code for 1xx: 1xx ^ 01x --> 1xx
+
+
+Question 2: It may not truly represent the true intensity if the binary representation has not been designed 50/50.
+
+If the original binary representation has not been designed in 50/50, then naturally the binary representation will not be categorised around the threshold 0.5.
+
+That is:
+```text
+#############
+# Safe case #
+#############
+                0.5
+                 |
+                 v
+
+  001  010  011    100  101  110  111
+
+####################
+# Not so safe case #
+####################
+
+               0.5
+                |
+                v
+  
+ 000  001  010     011  100  101  110
+```
+
+
