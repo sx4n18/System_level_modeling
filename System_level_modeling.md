@@ -523,3 +523,43 @@ This will be constructed in the new class.
 
 Following yesterday's idea, I will proceed the implementation for the new python class.
 
+Unlike previous dataline implementation, where it will simply do the data production and consumption at the same time. This new class has 2 different methods to produce and consume the data in FIFOs.
+
+Hence they can be operated at different rates in a separated method.
+
+In the previous dataline class, the simulation runs live on a "time_step", which syncs with the line of pixel values production.
+
+But in our new class, this will not work, so I will keep those 2 methods work on different "time_step". Each method's "time_step" will reflect respective "production" or "consumption" cycle.
+
+Other 2 methods where FIFO's space was checked will be kept since they work independently from the time step and can be checked statically.
+
+Now I have finished the construction of the class, I will do a simple test on the class with a single slice of image of 40 pixels.
+
+I have tested the async data line with the following test configurations:
++ Total running pixels length: 20 K 
++ Particle density: 500 cc 
++ Average particle size: 30 um 
++ Arm separation: 0.06
++ Arbiter: Round robin skip empty
++ Producing speed: 20 MHz 
++ Consuming speed: 37.5 MHz
++ FIFO depth: 256
+
+
+Under such testing conditions, the FIFOs were all well-managed and did not overflow.
+
+
+**TODO: add the image**
+
+![8 channels FIFO used up space track under the simple async data line test](./img/used_up_space_track_for_a_single_image_slice_during_Async_dataline_simulation_11_Dec_2025.pdf)
+
+The maximum used up FIFO belongs to channel 6 with 36 words used. This result agrees with the simulation result from [28 July](#28-july) where a simple image sample from the same big image was presented to the channel of 5.
+
+But will it survive the arm separation of 0.2?
+
+TL;DR; Nope, it will not.
+
+Similarly to the test carried out on the same day, the results shows that the FIFOs will fill up eventually and the reading speed cannot catch up with the production.
+
+Conclusion: our system should be okay if we keep the configurations as what we have tested. But the system cannot handle images when the arm separation is raised up to 0.2.
+
