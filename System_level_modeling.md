@@ -453,18 +453,18 @@ If the original binary representation has not been designed in 50/50, then natur
 
 That is:
 ```text
-#############
-# Safe case #
-#############
+##############
+# Ideal case #
+##############
                 0.5
                  |
                  v
 
   001  010  011    100  101  110  111
 
-####################
-# Not so safe case #
-####################
+#####################
+# Not so ideal case #
+#####################
 
                0.5
                 |
@@ -473,4 +473,53 @@ That is:
  000  001  010     011  100  101  110
 ```
 
+
+## 08 Dec 2025
+
+I have reviewed previous simulations I have implemented for the entire data line where 5 groups of pixels, 5 compressors, 5 FIFOs and 1 arbiter were encapsulated.
+
+The previous implementation works by:
+
+On each loop (slice of image), the compressor will compress the image for its own channel and push the result into the respective FIFO.
+
+--> The selected channel will be popped by 1 word.
+
+This means my previous simulation has the writing and popping at the same frequency.
+
+If writing at 20 MHz, reading will also be 20 MHz.
+
+
+
+## 10 Dec 2025
+
+I will now consider if what was mentioned on [08 Dec 2025](#08-dec-2025) is the real case for our application.
+
+There are 2 things that works in a different way as we would expect.
+
++ There will be 8 channels inside one LVDS/arbiter
++ The FIFO/arbiter read speed could actually be slightly faster than 20 MHz but not faster than 37.5 MHz.
+
+I will now try to construct the async dataline class that can write and pop data in different rate.
+
+With a common tick method, I can achieve this. 
+
+For example:
+
+```text
+
+If writing at 20 MHz, and reading at 37.5 MHz.
+
+Then for the period of 0.4 us, there will be 8 writings and 15 readings.
+
+0.4 e-6 / (1/20 MHz) = 8
+0.4 e-6 / (1/37.5 MHz) = 15
+
+I could increment the common tick with a time step of 0.003333333 us, and then every time it counts 15, we do one writing operation, and every time it counts to 8, we do one reading operation.
+```
+
+This will be constructed in the new class.
+
+## 11 Dec 2025
+
+Following yesterday's idea, I will proceed the implementation for the new python class.
 
