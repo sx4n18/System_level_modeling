@@ -549,9 +549,8 @@ I have tested the async data line with the following test configurations:
 Under such testing conditions, the FIFOs were all well-managed and did not overflow.
 
 
-**TODO: add the image**
 
-![8 channels FIFO used up space track under the simple async data line test](./img/used_up_space_track_for_a_single_image_slice_during_Async_dataline_simulation_11_Dec_2025.pdf)
+![8 channels FIFO used up space track under the simple async data line test](./img/used_up_space_track_for_a_single_image_slice_during_Async_dataline_simulation_11_Dec_2025.png)
 
 The maximum used up FIFO belongs to channel 6 with 36 words used. This result agrees with the simulation result from [28 July](#28-july) where a simple image sample from the same big image was presented to the channel of 5.
 
@@ -562,4 +561,27 @@ TL;DR; Nope, it will not.
 Similarly to the test carried out on the same day, the results shows that the FIFOs will fill up eventually and the reading speed cannot catch up with the production.
 
 Conclusion: our system should be okay if we keep the configurations as what we have tested. But the system cannot handle images when the arm separation is raised up to 0.2.
+
+
+## 12 Dec 2025
+
+I have verified the channel will survive the image of 0.06 for 500 cc and 30 um, but it will not survive the 0.2 image no matter what.
+
+So here I shall plot out the example image of those two and see if this is acceptable for Jonny.
+
+![20k run images with different arm separations side by side comparison](./img/20k_run_image_006_02_side_by_side_comparison.png)
+
+It can be seen that when arm separation is 0.2, the image has become much more messy than the image 006, which could be a problem to deal with under our case.
+
+
+Steve and I have also discussed the interface for the outputs of his ADC.
+
+The waveform form Steve's side would look something like this:
+
+**NOTE: The nStrobe signal will actually only last for 3-4 ns**
+**Disclaimer: nStrobe signal in the waveform is for demonstration purpose only**
+
+![3 important signals from Steve's side waveform might look like this](./img/pixel_ADC_from_steve_side_with_important_3_signals.png)
+
+
 
