@@ -579,9 +579,49 @@ Steve and I have also discussed the interface for the outputs of his ADC.
 The waveform form Steve's side would look something like this:
 
 **NOTE: The nStrobe signal will actually only last for 3-4 ns**
+
 **Disclaimer: nStrobe signal in the waveform is for demonstration purpose only**
 
 ![3 important signals from Steve's side waveform might look like this](./img/pixel_ADC_from_steve_side_with_important_3_signals.png)
 
 
+## 17 Dec 2025
+
+To answer the question for thresholding and impact from the small particles on the final image.
+
+I have applied the possible thresholds using the quantiser_3B class and plotted out corresponding images after quantisation.
+
+I will include them into a spread sheet.
+
+**WARNING: The quantised values in the image represent the light intensity**
+
+First we have the thresholds of following:
+
+**001 thresholds: [0.13, 0.19, 0.25, 0.31, 0.38, 0.44, 0.5]**
+
+The same images look like this:
+
+![same segment of the 20k images with the thresholds combo of 001](./img/ThresholdingCombo001SameSegmentImagsQuan3B.png)
+
+
+And after having different thresholds to quantise the images, these images have been put under test for the compression and async FIFO pop
+
+For thresholds combo 001, it can handle both arm separation of 006 and 02.
+
+Test results of image 006, max use for fifo is 14 words:
+
+![](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_001_image_006.png)
+
+Test results of image 02, max use for fifo is 95 words:
+
+![](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_001_image_02.png)
+
+For thresholds combo 010, it can only handle arm separation of 006, but cannot handle 02.
+
+
+Test results of image 006, max use for fifo is 32 words:
+
+![](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_010_image_006.png)
+
+Test result for image 02 will not be shown, cus it is not successful.
 
