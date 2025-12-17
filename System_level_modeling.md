@@ -610,18 +610,18 @@ For thresholds combo 001, it can handle both arm separation of 006 and 02.
 
 Test results of image 006, max use for fifo is 14 words:
 
-![](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_001_image_006.png)
+![Data line test under new thresholds quantised images for image 006](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_001_image_006.png)
 
 Test results of image 02, max use for fifo is 95 words:
 
-![](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_001_image_02.png)
+![Surprisingly it passed the stress test of image 02 under the new threshold combo](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_001_image_02.png)
 
 For thresholds combo 010, it can only handle arm separation of 006, but cannot handle 02.
 
 
 Test results of image 006, max use for fifo is 32 words:
 
-![](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_010_image_006.png)
+![Data line test under new threshold combo 010 of images 006](./img/FIFO_of_8_channels_under_tests_of_quan_image_threshold_010_image_006.png)
 
 Test result for image 02 will not be shown, cus it is not successful.
 
