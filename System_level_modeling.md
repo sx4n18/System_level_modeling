@@ -625,3 +625,225 @@ Test results of image 006, max use for fifo is 32 words:
 
 Test result for image 02 will not be shown, cus it is not successful.
 
+
+
+## 22 Jan 2026
+
+Had another meeting revisitng the system design, it looks promising with the simulation that has been operated.
+
+The conclusion so far:
+
++ Under the threshold config of 001: [0.13, 0.19, 0.25, 0.31, 0.38, 0.44, 0.5], both images of 006 and 02 will be processed without any overflow.
++ Under the threshold config of 010:, only the image 006 will survive the compression without overflow.
+
+
+This has inspired us to have the idea of maybe propose recommended threshold configuration under different cases.
+
+We will now have a parameter sweeps across few dimensions:
+
+- Arm separation: 0.06 ~ 0.2
+- "Sampling frequency": 5~20 MHz
+- Pixel resolution: 10,15,20 um
+- Number of groups of pixels per LVDS: 4,6,8
+- Threshold combo: 001, 010, 011
+
+
+Another point that was mentioned was that I could implement an escape mechanism to avoid making the packet builder and counter. (Another brilliant idea from Piotr) But I am not sure how much space this would save us. I personally prefer the packet builder and counter.
+
+One more thing to consider is what should we do when overflow happens.
+
+So far I have not considered it...
+
+But to think about it briefly, it will not be as simple as the existing instrument.
+
+**Why it is different**
+
+Current instrument only has 1 FIFO, and all the pixels are processed line by line, which is 128 pixels after pixels.
+
+So there are 2 possibility for the "overflow" situation: overflow/non-overflow.
+
+But in our case, we have 8 FIFOs for each group, because our reading speed is effectively 37.5 Mhz, overflow on 1 group is not a big issue.
+
+So to trigger the overflow emergency, I personally think it should at least overflow 2 groups.
+
+Another thing is, I still have not implemented the new class of the compression algorithm (Piotr updated).
+
+
+**Image generation**
+
+arm separation choices: [0.2, 0.16, 0.12, 0.08, 0.06]
+
+pixel_size: [10um, 15um, 20um]
+
+num of pixels: 120, so that we can have 3 channels of images to simulate with.
+
+Now I am generating for the following arm separation's images for 20k run.
+
+Basically I just have to run 3 times with the following pixel sizes settings: 10um, 15um, 20um
+
+
+**Generation run 01: pixel size 10um**
+
+It looks like it will run for quite a bit of time. I will leave it to run overnight.
+
+
+
+## 28 Jan 2026
+
+After few days of running the programme, we have managed to generate the images for all the configurations.
+
+15 images in total, with 20k lines.
+
+will now test them all and log down in the spreadsheet.
+
+with the following header:
+
+arm separation choices: [0.2, 0.16, 0.12, 0.08, 0.06]
+
+pixel_size: [10um, 15um, 20um]
+
+
+**Test 1: threshold -> 001, 8 groups**
+
+With the test configuration for threshold of 001, and 8 groups of pixels in total, we have the following table:
+
+
+|      | 10 | 15 | 20 |
+|------|----|----|----|
+| 0.06 | 21 | 16 | 13 |
+| 0.08 | 24 | 17 | 17 |
+| 0.12 | 36 | 33 | 23 |
+| 0.16 | 47 | 45 | 26 |
+| 0.2  | 54 | 41 | 28 |
+
+The table shows maximum word use for the FIFO during the 20k lines of image simulation.
+
+
+**Test 2: threshold -> 010, 8 groups**
+
+Similarly, we have the following table, the unavoidable overflowing simulations will be marked in *X*
+
+|      | 10 | 15 | 20 |
+|------|----|----|----|
+| 0.06 | 39 | 28 | 21 |
+| 0.08 | 85 | 58 | 54 |
+| 0.12 | *X*  | *X*  | *X*  |
+| 0.16 | *X*  | *X*  | *X*  |
+| 0.2  | *X*  | *X*  | *X*  |
+
+Specifically, the arm separation bigger or equal than 0.12 will overflow the FIFOs with the given setup.
+
+Additionally, the following test will give the maximum number of channels our system will be able to handle for each configuration.
+
+*10 um*
+
+arm_separation: 0.2; pixel: 10um; --> 5 channels, max word use: 79
+
+arm_separation: 0.16; pixel: 10um; --> 5 channels, max word use: 66
+
+arm_separation: 0.12; pixel: 10um; --> 6 channels, max word use: 91
+
+
+*15 um*
+
+arm_separation: 0.2; pixel: 15um; --> 5 channels, max word use: 77
+
+arm_separation: 0.16; pixel: 15um; --> 6 channels, max word use: 288 (still risky)
+                                  |
+                                   --> 5 channels, max word use: 77
+
+
+arm_separation: 0.12; pixel: 15um; --> 6 channels, max word use: 192
+
+
+*20 um*
+
+arm_separation: 0.2; pixel: 20um; --> 6 channels, max word use: 168 (kinda risky, but manageable)
+
+arm_separation: 0.16; pixel: 20um; --> 6 channels, max word use: 90
+
+arm_separation: 0.12; pixel: 20um; --> 7 channels, max word use: 108
+
+
+
+**Test 3: threshold -> 011, 8 groups**
+
+
+First of all, when we have groups of 8, none of the configuration will pass the test. 
+
+When we changed the group settings to 7, it is still not safe to run any simulations.
+
+Therefore, I will list the test results starting from group of 6.
+
+|      | 10  | 15  | 20 |
+|------|-----|-----|----|
+| 0.06 | 365 | 349 | 90 |
+| 0.08 | *X*   | *X*   | *X*  |
+| 0.12 | *X*   | *X*   | *X*  |
+| 0.16 | *X*   | *X*   | *X*  |
+| 0.2  | *X*   | *X*   | *X*  |
+
+The following test is the group of 5:
+
+|      | 10  | 15  | 20 |
+|------|-----|-----|----|
+| 0.06 | 107 | 128 | 46 |
+| 0.08 | *X*   | *X*   | *X*  |
+| 0.12 | *X*   | *X*   | *X*  |
+| 0.16 | *X*   | *X*   | *X*  |
+| 0.2  | *X*   | *X*   | *X*  |
+
+
+The following is for group of 4:
+
+|      | 10  | 15  | 20 |
+|------|-----|-----|----|
+| 0.06 | 52 | 38 | 28 |
+| 0.08 | 93   | 94   | 94  |
+| 0.12 | *X*   | *X*   | *X*  |
+| 0.16 | *X*   | *X*   | *X*  |
+| 0.2  | *X*   | *X*   | *X*  |
+
+
+The following is for group of 3:
+
+|      | 10 | 15  | 20 |
+|------|----|-----|----|
+| 0.06 | 28 | 25  | 16 |
+| 0.08 | 25 | 24  | 30 |
+| 0.12 | 46 | 67  | 74 |
+| 0.16 | 62 | 140 | 71 |
+| 0.2  | 70 | 135 | 87 |
+
+It can be seen from the test that, this threshold configuration of 011 is very challenging.
+
+Probably this threshold combination will not be recommended to users, or unless under certain conditions.
+
+
+## 29 Jan 2026
+
+
+This threshold combo of 011 may not be totally valid. I will plot out the same segment of image under different threshold side by side.
+
+And the plotted images can be seen from below:
+
+![The comparison of the same images under same pixel size(10um) and same arm separation(0.06) with different thresholds](./img/images_under_different_quantisation_thresholds_where_011_is_quite_problematic.png)
+
+And after viewing the images under arm separation of 0.2, I understood why it will be very very challenging for us to deal with FIFOs and data stream when it is quantised with 011 combo.
+
+![The image comparison of the same images with pixel size of 10um and same arm separation of 0.2 under different thresholds](./img/same_image_plot_like_before_but_with_arm_separation_of_02_which_gives_us_messy_images_of_011.png)
+
+
+## 30 Jan 2026
+
+While I was playing around with the python model, I realised the bigger the particle, the harder the diffraction will be observed.
+
+Given that our arm separation is 0.2 max, the chances that we have a very big particle would be still very low.
+
+If we come across a very big particle that spans few hundred lines, which means the particle in question would be of size of $10e^{-6} * 100 = 1000e^{-6} = 1e^{-3}$. 
+
+In this case, what we can see would most likely be black with ripples on the rim. 
+
+And I have verified with very big spheres.
+
+To which, our model should be okay.
