@@ -847,3 +847,40 @@ In this case, what we can see would most likely be black with ripples on the rim
 And I have verified with very big spheres.
 
 To which, our model should be okay.
+
+
+
+## 02 Feb 2026
+
+I will try to now generate a simple "big particles" image.
+
+This can be manually embedded.
+
+I will try to just generate an image with 4/5 big column particles that are overlapped on top of each other.
+
+![Big particles generated with 4 big columns of 1 mm diameters with about 200 lines of images](./img/Union_Jack_pattern_made_by_columns_with_around_400_rows_of_image.png)
+
+And also for this image, the columns are positioned at different distances that are on top of each other.
+
+$Z_{col} = 0.05 + i * 0.02$ 
+
+This will give us 4 particles with distances of 0.05, 0.07, 0.09 and 0.11
+
+
+**Disclaimer: the following quantised image has been processed based on the threshold combo 001**
+
+For this particular image, I put it under the test, and it seems that our FIFO is totally fine with it given that there are almost 200 lines of "messy data":
+
+
+![This is the big particle image slice](./img/with_almost_200_rows_messy_data_big_pear_image_slice.png)
+
+![This is the FIFO fill level during the test for this specific image](./img/8_channels_seem_to_be_okay_with_almost_200_lines_of_messy_data_image_with_max_use_ofless_than_130_words.png)
+
+
+The Tested slice has been the "worst case" scenario
+
+I then tested the image with a bigger particle that has about 400 lines. and it seems our model can handle it well too.
+
+With the biggest usage of line of word of around 127.
+
+
