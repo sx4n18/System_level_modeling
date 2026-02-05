@@ -942,3 +942,9 @@ procedure ARBITER_STEP():
 This gives the max word use for channel 3 at 131.
 
  ![Filled up level for all the FIFOs under the test image of a very big particle max read is 32 in this case](./img/Big_particle_test_with_congestion_aware_round_robin_readout_logic.png)
+
+ Same test for round robin skip with the max word use for channel 3 at 126:
+
+ ![FIFO fill level under big particle test when it is read out round robin but skip the empty FIFO](./img/big_particle_test_under_round_robin_skip_read_out_logic_shceme_05_Feb.png)
+
+ 
