@@ -884,3 +884,61 @@ I then tested the image with a bigger particle that has about 400 lines. and it 
 With the biggest usage of line of word of around 127.
 
 
+## 05 Feb 2026
+
+I have the idea of a new arbiter design that will do the following read out logic:
+
+```pseudo
+State:
+    curr_idx        : integer in [0..7]
+    read_count      : integer
+
+Inputs (per cycle):
+    empty[i]        : FIFO i empty flag
+    almost_full[i]  : FIFO i almost-full flag
+
+Parameters:
+    MAX_READS       : maximum consecutive reads per FIFO
+
+Outputs:
+    rd_en[i]        : read enable for FIFO i
+
+
+
+procedure ARBITER_STEP():
+
+    // Default: no read
+    rd_en[i] ← false for all i
+
+    // Case 1: all FIFOs empty
+    if all empty[i] = true:
+        read_count ← 0
+        return
+
+    // Case 2: pre-emption by almost-full FIFO
+    if exists j ≠ curr_idx such that almost_full[j] = true:
+        curr_idx ← j
+        read_count ← 0
+
+    // Case 3: current FIFO is empty
+    else if empty[curr_idx] = true:
+        curr_idx ← (curr_idx + 1) mod 8
+        read_count ← 0
+        return
+
+    // Case 4: fairness limit reached
+    else if read_count = MAX_READS:
+        curr_idx ← (curr_idx + 1) mod 8
+        read_count ← 0
+        return
+
+    // Case 5: normal read
+    rd_en[curr_idx] ← true
+    read_count ← read_count + 1
+```
+
+ And this reading strategy has been implemented and tested, it seems that it is doing okay... slightly worse than round robin skip, but did a better job at making all the FIFOs filled up around a similar level.
+
+This gives the max word use for channel 3 at 131.
+
+ ![Filled up level for all the FIFOs under the test image of a very big particle max read is 32 in this case](./img/Big_particle_test_with_congestion_aware_round_robin_readout_logic.png)
