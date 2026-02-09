@@ -947,4 +947,6 @@ This gives the max word use for channel 3 at 131.
 
  ![FIFO fill level under big particle test when it is read out round robin but skip the empty FIFO](./img/big_particle_test_under_round_robin_skip_read_out_logic_shceme_05_Feb.png)
 
+ what is interesting is when I set the FIFO depth to 128, our congestion-aware round robin can squeeze the max use of the FIFOs down to 124 instead of 131 while juggling between FIFOs.
+
  
