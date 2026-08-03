@@ -950,3 +950,95 @@ This gives the max word use for channel 3 at 131.
  what is interesting is when I set the FIFO depth to 128, our congestion-aware round robin can squeeze the max use of the FIFOs down to 124 instead of 131 while juggling between FIFOs.
 
  
+
+ ## 13 Feb 2026
+ 
+ I have drafted up the RTL for the congestion aware round robin implementation.
+
+ And it has passed the simulation test, but still we do not know if this is the best way for framing given that the we need the exact word size to push out while send data in real time.
+
+ This only increases the difficulty to build the write up circuitry.
+
+ So I am thinking that I could probably write up the python class and compare different ways of framing, and see the size difference.
+
+
+
+## 3 Aug 2026
+
+Back on this again, because I am thinking of the possible 1-bit compression scheme.
+
+Besides, I need to implement the updated row based encoder in python (with internal increment counter and also only alarm encoding at silent mode).
+
+Another thing is, I need to think of the proper way to finish encoding, not simply just a reset.
+
+
+### 1-bit compression scheme
+
+This scheme is a lossy compression, but should significantly reduce the amount of data it takes.
+
+
+Step-by-step, I have the 1-bit mode compression scheme set as below following :
+
++ Main scheme and data representation did not change. i.e. leading 0 means data while leading 1 means timestamp. 0x8000 means wraps.
++ Compression will accumulate the 3-clocks binarised data, in total 15-bit and save that as a pattern.
++ Each comparison will only happen every 3 cycles, but the external clock still increment by every clock tick.
++ If the comparison shows equality, we enter silent mode.
++ While compressor is in silent mode, it tracks the lsb 15 of the clock, if current lsb 15 is smaller than the recorded lsb 15, we shall export 0x8000, otherwise, we simply update the recorded lsb 15.
++ When pattern breaks, we break out of the silent mode and export both timestamp and the new pattern.
+
+
+Note about this scheme:
+
+- **During alarm setting, because we carry out evaluation every 3 cycles, the exact time we export special packet would fall randomly at any phase of 3, but it does not matter for the decoder, all it simply need to know is how many wraps has happened during silent mode so correct cycles can be reconstructed.**
+- **Proper reset has not been designed yet, but roughly it should export the accumulated 1-bit raw data if there is any, and it should export the timestamp in some way**
+- **This compression is still relying on the external clock instead of internal increment counter, which would actually avoid some problem if implemented that way**
+
+
+### Updated row based encoder 5P
+
+I would personally label this scheme as version 0.2 to stay consistent with the hardware version.
+
+What's new:
+
++ We stop relying on the external clock to do the silent timing counting synchronisation, we enable the internal counter while silent.
++ We only export clock synchronisation signal while silent instead of checking the timer both at silent and actively forwarding data.
++ Add a finish call?
+
+
+I will now try to find the test script I used to obtain the compression ratio and test it on the new 1-bit compression scheme to see how much we can save.
+
+But it seems that so far for the same noisy image like this:
+
+![a little noisy image for 3-bit compression test and 1-bit compression](./img/An_example_256_by_999_particle_images_3BIT_and_1BIT_side_by_side.png)
+
+
+for 250 pixels slices, the original 5P row based encoder produces 58456 bytes, and the new updated 5P row based encoder produces 58508 bytes, while the new 1-bit encoder compressed the 1-bit image down to 3676 bytes. Actually still quite significant compression.
+
+Technically, for the size of data we are testing, both 5P encoder should produce the same amount of data. I think the difference is actually from the ending finish call I made for the new class when we use *encode_in_mem* method.
+
+I will now visually check briefly how both 5P encoders work by examining the output data.
+
+Visual check shows no difference, so I wrote a simple comparison function and it appears that no difference was spotted for data size returned.
+
+Also I made the class spit out the finish encode words, it proved my thoughts with 26 timestamp words.
+
+
+### Test on the 1-bit mode for that spreadsheet test
+
+I updated the test script "Test_on_diff_mean_con_w_row_encoder.py" with additional test on the 1-bit encoder.
+
+It seems this compression is very effective, and basically win over all the cases for the comparison with at least 50% reduction in size with only one exception.
+
+```
+Total encode size for mean size of 2e-05 and concentration of 50000000.0 is: 318 
+
+Total encode size for 1-bit encoder for mean size of 2e-05 and concentration of 50000000.0 is: 452 
+```
+
+So for this specific image with the mean size of 20 um particles and concentration of 50 per cc. We have higher data output for 1-bit encoder.
+
+This is because the newly scripted 1-bit encoder has the extra overhead for finish call. It needs to report the last timestamp.
+
+Given that this test was done on 50 encoders, we have $3 \times 50 \times 2 = 300$ bytes finishing timestamp call.
+
+
