@@ -971,6 +971,7 @@ Besides, I need to implement the updated row based encoder in python (with inter
 
 Another thing is, I need to think of the proper way to finish encoding, not simply just a reset.
 
+ ---
 
 ### 1-bit compression scheme
 
@@ -993,6 +994,8 @@ Note about this scheme:
 - **Proper reset has not been designed yet, but roughly it should export the accumulated 1-bit raw data if there is any, and it should export the timestamp in some way**
 - **This compression is still relying on the external clock instead of internal increment counter, which would actually avoid some problem if implemented that way**
 
+
+---
 
 ### Updated row based encoder 5P
 
@@ -1022,6 +1025,7 @@ Visual check shows no difference, so I wrote a simple comparison function and it
 
 Also I made the class spit out the finish encode words, it proved my thoughts with 26 timestamp words.
 
+---
 
 ### Test on the 1-bit mode for that spreadsheet test
 
@@ -1042,3 +1046,12 @@ This is because the newly scripted 1-bit encoder has the extra overhead for fini
 Given that this test was done on 50 encoders, we have $3 \times 50 \times 2 = 300$ bytes finishing timestamp call.
 
 
+## 4 Aug 2026
+
+The one thing I am having in doubt is the decoding for 1-bit mode.
+
+But also in the meantime, I need to implement a new 1-bit compression scheme where the synchronisation only happens with the internal counter.
+
+Just finished the construction of the 1-bit mode for the compressor with internal counter.
+
+Will try to make it run the test later.
