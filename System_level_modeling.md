@@ -1055,3 +1055,34 @@ But also in the meantime, I need to implement a new 1-bit compression scheme whe
 Just finished the construction of the 1-bit mode for the compressor with internal counter.
 
 Will try to make it run the test later.
+
+
+
+## 10 Aug 2026
+
+I now re-read the script and try to generate the packets of data out of it.
+
+So basically the flow will be:
+
+```text
+Async_dataline.run_single_image(data_array)
+            |
+            V
+    popped word at each time stamp.txt
+            |
+            V
+packetiser.build_packet(file)
+            |
+            V
+    organised packets.txt
+```
+
+
+The Async dataline basically consists of the compressor, fifo, and arbiter, but there is no overflow handler.
+
+The test script *Async_DL_test.py* will slice the big 20k\*120 image into a testable array and feed that into the data line and produce the popped word at each time stamp text file with following information included:
+
+Timestamp, Channel ID, Popped Word(Hex), Popped  Word(Dec)
+
+Then the other script *Packetiser_test.py* will read this text file and produce the packets.
+
